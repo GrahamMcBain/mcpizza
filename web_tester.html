@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCPizza Server Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .header {
+            text-align: center;
+            color: #d62300;
+            margin-bottom: 30px;
+        }
+        .tool-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .tool-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .tool-description {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        input, textarea, button {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input, textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #d62300;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px 20px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #b01e00;
+        }
+        .result {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍕 MCPizza Server Tester</h1>
+            <p>Test the MCPizza MCP server tools interactively</p>
+            <div class="status error">
+                ⚠️ DEMO MODE: This uses mock data for demonstration. Real server uses actual Domino's API.
+            </div>
+        </div>
+
+        <div id="status" class="status info">
+            Click "Test Server Connection" to start
+        </div>
+
+        <div class="tool-section">
+            <div class="tool-title">Server Connection</div>
+            <div class="tool-description">Test if the MCPizza server is working</div>
+            <button onclick="testConnection()">Test Server Connection</button>
+            <div id="connection-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="tool-section">
+            <div class="tool-title">Find Domino's Store</div>
+            <div class="tool-description">Find the nearest Domino's store by address or zip code</div>
+            <input type="text" id="address-input" placeholder="Enter address or zip code (e.g., 10001)" value="10001">
+            <button onclick="findStore()">Find Store</button>
+            <div id="store-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="tool-section">
+            <div class="tool-title">Search Menu</div>
+            <div class="tool-description">Search for specific items in the store menu</div>
+            <input type="text" id="search-input" placeholder="Enter search term (e.g., pizza, wings)" value="pizza">
+            <button onclick="searchMenu()">Search Menu</button>
+            <div id="menu-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="tool-section">
+            <div class="tool-title">Add to Order</div>
+            <div class="tool-description">Add items to your pizza order</div>
+            <input type="text" id="item-code-input" placeholder="Item code (e.g., M_PEPPERONI)" value="M_PEPPERONI">
+            <input type="number" id="quantity-input" placeholder="Quantity" value="1" min="1">
+            <button onclick="addToOrder()">Add to Order</button>
+            <div id="order-add-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="tool-section">
+            <div class="tool-title">View Order</div>
+            <div class="tool-description">View current order contents and total</div>
+            <button onclick="viewOrder()">View Order</button>
+            <div id="order-view-result" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        function showResult(elementId, content) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(content, null, 2);
+            element.style.display = 'block';
+        }
+
+        // Simulate MCP server responses (since we can't actually call the Python server from browser)
+        function mockMCPCall(tool, params) {
+            switch(tool) {
+                case 'connection':
+                    return {
+                        status: 'success',
+                        server: 'mcpizza',
+                        version: '0.1.0',
+                        tools: ['find_dominos_store', 'search_menu', 'add_to_order', 'view_order']
+                    };
+                
+                case 'find_dominos_store':
+                    // Mock data based on common zip codes
+                    const zipMockData = {
+                        '95608': {
+                            store_id: "4521",
+                            phone: "(916) 555-0199",
+                            address: "1234 Main St Carmichael, CA",
+                            is_delivery_store: true,
+                            min_delivery_order_amount: 10.00,
+                            delivery_minutes: "20-30",
+                            pickup_minutes: "10-20"
+                        },
+                        '10001': {
+                            store_id: "3681", 
+                            phone: "(212) 555-0123",
+                            address: "123 Broadway New York, NY",
+                            is_delivery_store: true,
+                            min_delivery_order_amount: 10.00,
+                            delivery_minutes: "25-35",
+                            pickup_minutes: "15-25"
+                        },
+                        '90210': {
+                            store_id: "2105",
+                            phone: "(310) 555-0156",
+                            address: "456 Rodeo Dr Beverly Hills, CA",
+                            is_delivery_store: true,
+                            min_delivery_order_amount: 15.00,
+                            delivery_minutes: "30-40",
+                            pickup_minutes: "15-25"
+                        }
+                    };
+                    
+                    const mockStore = zipMockData[params.address] || {
+                        store_id: "9999",
+                        phone: "(555) 555-0100", 
+                        address: `123 Demo St ${params.address}`,
+                        is_delivery_store: true,
+                        min_delivery_order_amount: 10.00,
+                        delivery_minutes: "25-35",
+                        pickup_minutes: "15-25"
+                    };
+                    
+                    return {
+                        ...mockStore,
+                        status: "success",
+                        note: "⚠️ This is mock demo data - real server would use actual Domino's API"
+                    };
+                
+                case 'search_menu':
+                    if (params.query.toLowerCase().includes('pizza')) {
+                        return {
+                            items: [
+                                {
+                                    category: "Pizza",
+                                    code: "S_PIZZA",
+                                    name: "Medium Hand Tossed Pizza",
+                                    description: "Medium pizza with classic hand tossed crust",
+                                    price: "$15.99"
+                                },
+                                {
+                                    category: "Pizza",
+                                    code: "L_DELUXE",
+                                    name: "Large Deluxe Pizza",
+                                    description: "Pepperoni, Italian sausage, green peppers, mushrooms, onions",
+                                    price: "$21.99"
+                                },
+                                {
+                                    category: "Pizza",
+                                    code: "M_PEPPERONI",
+                                    name: "Medium Pepperoni Pizza",
+                                    description: "Classic pepperoni pizza",
+                                    price: "$17.99"
+                                }
+                            ],
+                            status: "success"
+                        };
+                    } else if (params.query.toLowerCase().includes('wings')) {
+                        return {
+                            items: [
+                                {
+                                    category: "Wings",
+                                    code: "HOT_WINGS",
+                                    name: "Hot Buffalo Wings",
+                                    description: "Spicy buffalo wings with celery",
+                                    price: "$9.99"
+                                }
+                            ],
+                            status: "success"
+                        };
+                    } else {
+                        return {
+                            error: `No items found matching '${params.query}'`
+                        };
+                    }
+                
+                case 'add_to_order':
+                    window.orderItems = window.orderItems || [];
+                    window.orderItems.push({
+                        code: params.item_code,
+                        quantity: params.quantity
+                    });
+                    return {
+                        message: `Added ${params.quantity}x ${params.item_code} to order`,
+                        status: "success"
+                    };
+                
+                case 'view_order':
+                    window.orderItems = window.orderItems || [];
+                    if (window.orderItems.length === 0) {
+                        return {
+                            message: "No items in order yet"
+                        };
+                    }
+                    return {
+                        items: window.orderItems,
+                        total: "$35.36",
+                        status: "success"
+                    };
+                
+                default:
+                    return {
+                        error: `Unknown tool: ${tool}`
+                    };
+            }
+        }
+
+        function testConnection() {
+            updateStatus('Testing server connection...', 'info');
+            
+            setTimeout(() => {
+                const result = mockMCPCall('connection', {});
+                showResult('connection-result', result);
+                updateStatus('✅ Server connection successful', 'success');
+            }, 500);
+        }
+
+        function findStore() {
+            const address = document.getElementById('address-input').value;
+            if (!address) {
+                updateStatus('❌ Please enter an address', 'error');
+                return;
+            }
+            
+            updateStatus('Finding store...', 'info');
+            
+            setTimeout(() => {
+                const result = mockMCPCall('find_dominos_store', { address });
+                showResult('store-result', result);
+                updateStatus('✅ Store found successfully', 'success');
+            }, 500);
+        }
+
+        function searchMenu() {
+            const query = document.getElementById('search-input').value;
+            if (!query) {
+                updateStatus('❌ Please enter a search term', 'error');
+                return;
+            }
+            
+            updateStatus('Searching menu...', 'info');
+            
+            setTimeout(() => {
+                const result = mockMCPCall('search_menu', { query });
+                showResult('menu-result', result);
+                if (result.error) {
+                    updateStatus('❌ No items found', 'error');
+                } else {
+                    updateStatus(`✅ Found ${result.items.length} items`, 'success');
+                }
+            }, 500);
+        }
+
+        function addToOrder() {
+            const itemCode = document.getElementById('item-code-input').value;
+            const quantity = parseInt(document.getElementById('quantity-input').value) || 1;
+            
+            if (!itemCode) {
+                updateStatus('❌ Please enter an item code', 'error');
+                return;
+            }
+            
+            updateStatus('Adding to order...', 'info');
+            
+            setTimeout(() => {
+                const result = mockMCPCall('add_to_order', { item_code: itemCode, quantity });
+                showResult('order-add-result', result);
+                updateStatus('✅ Item added to order', 'success');
+            }, 500);
+        }
+
+        function viewOrder() {
+            updateStatus('Loading order...', 'info');
+            
+            setTimeout(() => {
+                const result = mockMCPCall('view_order', {});
+                showResult('order-view-result', result);
+                if (result.items) {
+                    updateStatus(`✅ Order contains ${result.items.length} items`, 'success');
+                } else {
+                    updateStatus('ℹ️ Order is empty', 'info');
+                }
+            }, 500);
+        }
+
+        // Initialize
+        window.orderItems = [];
+    </script>
+
+    <div class="container">
+        <h3>About This Tester</h3>
+        <p>This web interface demonstrates the MCPizza server functionality using mock data. 
+        To test the actual server, use:</p>
+        <ul>
+            <li><code>python test_mcpizza_with_curl.py</code> - Direct server testing</li>
+            <li><code>mcp tools python mcpizza/mcp_stdio_server.py</code> - With mcptools</li>
+            <li>MCP client integration for real usage</li>
+        </ul>
+        <p>The MCPizza server is ready for integration with AI assistants and MCP clients!</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcpizza"
+version = "0.1.0"
+description = "MCP server for ordering pizza through Domino's API"
+authors = [{name = "MCP Pizza", email = "mcpizza@example.com"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "pizzapi>=0.0.1",
+    "requests>=2.25.0",
+    "pydantic>=1.8.0",
+]
+
+[project.scripts]
+mcpizza = "mcpizza.server:main"
