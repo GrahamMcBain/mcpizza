@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MCPizza - Domino's Pizza Ordering MCP Server
 
 An MCP (Model Context Protocol) server that enables AI assistants to order pizza using the unofficial Domino's API.
