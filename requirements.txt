@@ -1,3 +1,4 @@
+fastapi>=0.104.0
 pizzapi>=0.0.1
 requests>=2.25.0
 pydantic>=1.8.0
