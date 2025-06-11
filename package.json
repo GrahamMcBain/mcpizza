@@ -1,17 +1,30 @@
 {
-  "name": "mcpizza-vercel",
+  "name": "@mcpizza/server",
   "version": "1.0.0",
-  "description": "MCPizza - Domino's Pizza Ordering MCP Server for Vercel",
-  "main": "api/mcp.py",
-  "scripts": {
-    "dev": "vercel dev",
-    "deploy": "vercel --prod"
+  "description": "MCPizza - Domino's Pizza Ordering MCP Server",
+  "main": "dist/index.js",
+  "bin": {
+    "mcpizza": "dist/index.js"
   },
-  "keywords": ["mcp", "pizza", "dominos", "api", "serverless"],
+  "scripts": {
+    "build": "echo 'No build needed'",
+    "start": "node dist/index.js"
+  },
+  "keywords": ["mcp", "pizza", "dominos", "anthropic", "claude"],
   "author": "MCPizza Team",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/GrahamMcBain/mcpizza"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
