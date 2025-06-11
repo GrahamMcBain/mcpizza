@@ -1,0 +1,18 @@
+{
+  "name": "mcpizza-vercel",
+  "version": "1.0.0",
+  "description": "MCPizza - Domino's Pizza Ordering MCP Server for Vercel",
+  "main": "api/mcp.py",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel --prod"
+  },
+  "keywords": ["mcp", "pizza", "dominos", "api", "serverless"],
+  "author": "MCPizza Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GrahamMcBain/mcpizza"
+  }
+}

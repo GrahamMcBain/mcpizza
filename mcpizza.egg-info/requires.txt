@@ -1,0 +1,6 @@
+pizzapi>=0.0.1
+requests>=2.25.0
+pydantic>=1.8.0
+fastapi>=0.100.0
+uvicorn>=0.20.0
+tadata-sdk>=0.1.0

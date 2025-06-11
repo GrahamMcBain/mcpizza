@@ -1,0 +1,2 @@
+pizzapi>=0.0.6
+requests>=2.25.0
