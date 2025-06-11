@@ -318,29 +318,50 @@ class handler(BaseHTTPRequestHandler):
             self.send_header('Cache-Control', 'no-cache')
             self.send_header('Connection', 'keep-alive')
             self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Access-Control-Allow-Headers', 'Cache-Control')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type, Cache-Control')
             self.end_headers()
             
-            # Send initial server info
-            server_info = {
-                "jsonrpc": "2.0",
-                "method": "server/info",
-                "params": {
-                    "name": "MCPizza",
-                    "version": "1.0.0",
-                    "description": "Domino's Pizza Ordering MCP Server",
-                    "real_api_enabled": os.getenv("MCPIZZA_REAL_API", "false") == "true",
-                    "fallback_enabled": os.getenv("MCPIZZA_FALLBACK_MOCK", "true") == "true"
+            # Keep connection alive with periodic pings
+            try:
+                # Send initial connection message
+                self.wfile.write(f"data: {json.dumps({'type': 'connection', 'status': 'connected'})}\n\n".encode())
+                self.wfile.flush()
+                
+                # Send server capabilities
+                capabilities = {
+                    "type": "capabilities",
+                    "tools": [
+                        {
+                            "name": "find_dominos_store",
+                            "description": "Find the nearest Domino's store"
+                        },
+                        {
+                            "name": "search_menu", 
+                            "description": "Search pizza menu"
+                        },
+                        {
+                            "name": "add_to_order",
+                            "description": "Add items to order"
+                        },
+                        {
+                            "name": "view_order",
+                            "description": "View current order"
+                        }
+                    ]
                 }
-            }
-            
-            self.wfile.write(f"data: {json.dumps(server_info)}\n\n".encode())
-            self.wfile.flush()
-            
+                
+                self.wfile.write(f"data: {json.dumps(capabilities)}\n\n".encode())
+                self.wfile.flush()
+                
+            except Exception as write_error:
+                logger.error(f"Error writing SSE data: {write_error}")
+                
         except Exception as e:
             logger.error(f"SSE GET error: {e}")
             self.send_response(500)
+            self.send_header('Content-Type', 'text/plain')
             self.end_headers()
+            self.wfile.write(f"Error: {str(e)}".encode())
     
     def do_POST(self):
         try:

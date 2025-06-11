@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 import json
 import os
 import logging
+import asyncio
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -148,34 +149,62 @@ async def root():
 
 @app.get("/sse")
 async def sse_endpoint():
-    async def event_stream():
-        # Send initial connection
-        yield f"data: {json.dumps({'type': 'connection', 'status': 'connected'})}\n\n"
-        
-        # Send capabilities
-        capabilities = {
-            "type": "capabilities",
-            "tools": [
-                {"name": "find_dominos_store", "description": "Find nearest Domino's store"},
-                {"name": "search_menu", "description": "Search pizza menu"},
-                {"name": "add_to_order", "description": "Add items to order"},
-                {"name": "view_order", "description": "View current order"}
-            ]
-        }
-        yield f"data: {json.dumps(capabilities)}\n\n"
-        
-        # Keep alive
-        while True:
-            yield f"data: {json.dumps({'type': 'ping'})}\n\n"
-            await asyncio.sleep(30)
+    def event_stream():
+        try:
+            # Send initial connection
+            yield f"data: {json.dumps({'type': 'connection', 'status': 'connected'})}\n\n"
+            
+            # Send MCP initialization
+            init_response = {
+                "jsonrpc": "2.0",
+                "result": {
+                    "protocolVersion": "1.0.0",
+                    "capabilities": {"tools": {}},
+                    "serverInfo": {"name": "MCPizza", "version": "1.0.0"}
+                }
+            }
+            yield f"data: {json.dumps(init_response)}\n\n"
+            
+            # Send tools list
+            tools_response = {
+                "jsonrpc": "2.0",
+                "result": {
+                    "tools": [
+                        {
+                            "name": "find_dominos_store",
+                            "description": "Find nearest Domino's store",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {"address": {"type": "string"}},
+                                "required": ["address"]
+                            }
+                        },
+                        {
+                            "name": "search_menu",
+                            "description": "Search pizza menu",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {"query": {"type": "string"}},
+                                "required": ["query"]
+                            }
+                        }
+                    ]
+                }
+            }
+            yield f"data: {json.dumps(tools_response)}\n\n"
+            
+        except Exception as e:
+            logger.error(f"SSE stream error: {e}")
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
     
     return StreamingResponse(
         event_stream(),
         media_type="text/event-stream",
         headers={
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache", 
             "Connection": "keep-alive",
-            "Access-Control-Allow-Origin": "*"
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Cache-Control"
         }
     )
 

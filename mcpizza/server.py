@@ -13,11 +13,10 @@ from typing import Any, Dict, List, Optional
 from mcp.server import Server
 from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
+from mcp.types import ServerCapabilities
 from mcp.types import (
     CallToolRequest,
     CallToolResult,
-    GetToolRequest,
-    GetToolResult,
     ListToolsRequest,
     ListToolsResult,
     Tool,
@@ -646,11 +645,15 @@ def create_server() -> Server:
 async def main():
     """Run the server"""
     server = create_server()
-    options = InitializationOptions(
-        server_name="mcpizza",
-        server_version="0.1.0"
-    )
-    await stdio_server(server, options)
+    async with stdio_server() as (read_stream, write_stream):
+        await server.run(
+            read_stream, write_stream,
+            InitializationOptions(
+                server_name="mcpizza",
+                server_version="0.1.0",
+                capabilities=ServerCapabilities(tools={})
+            )
+        )
 
 if __name__ == "__main__":
     asyncio.run(main())

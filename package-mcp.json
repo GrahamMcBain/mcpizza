@@ -1,0 +1,23 @@
+{
+  "name": "@mcpizza/server",
+  "version": "1.0.0",
+  "description": "MCPizza - Domino's Pizza Ordering MCP Server",
+  "main": "dist/index.js",
+  "bin": {
+    "mcpizza": "dist/index.js"
+  },
+  "scripts": {
+    "build": "echo 'Build complete'",
+    "start": "node dist/index.js"
+  },
+  "keywords": ["mcp", "pizza", "dominos", "anthropic"],
+  "author": "MCPizza Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GrahamMcBain/mcpizza"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
