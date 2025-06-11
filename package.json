@@ -5,7 +5,6 @@
   "main": "api/mcp.py",
   "scripts": {
     "dev": "vercel dev",
-    "build": "vercel build",
     "deploy": "vercel --prod"
   },
   "keywords": ["mcp", "pizza", "dominos", "api", "serverless"],
