@@ -243,27 +243,53 @@ def handle_call_tool(name: str, arguments: Dict[str, Any]):
         logger.error(f"Tool {name} failed: {e}")
         return {"content": [{"type": "text", "text": f"Error: {str(e)}"}]}
 
-# Vercel serverless function handler
-def handler(request):
-    """Main Vercel handler"""
-    try:
-        # Handle CORS preflight
-        if request.method == 'OPTIONS':
-            return {
-                'statusCode': 200,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type',
-                },
-                'body': ''
-            }
+# Vercel serverless function handler - proper export
+from http.server import BaseHTTPRequestHandler
+import urllib.parse
+
+class handler(BaseHTTPRequestHandler):
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
         
-        # Parse request body
-        if request.method == 'POST':
-            body = json.loads(request.body)
-            method = body.get("method")
-            params = body.get("params", {})
+    def do_GET(self):
+        try:
+            response = {
+                "name": "MCPizza",
+                "version": "1.0.0", 
+                "description": "Domino's Pizza Ordering MCP Server",
+                "real_api_enabled": os.getenv("MCPIZZA_REAL_API", "false") == "true",
+                "fallback_enabled": os.getenv("MCPIZZA_FALLBACK_MOCK", "true") == "true"
+            }
+            
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(response).encode())
+            
+        except Exception as e:
+            logger.error(f"GET error: {e}")
+            self.send_response(500)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": str(e)}).encode())
+    
+    def do_POST(self):
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length > 0:
+                body = self.rfile.read(content_length).decode('utf-8')
+                data = json.loads(body)
+            else:
+                data = {}
+            
+            method = data.get("method")
+            params = data.get("params", {})
             
             if method == "tools/list":
                 response = handle_list_tools()
@@ -273,32 +299,17 @@ def handler(request):
                 response = handle_call_tool(tool_name, tool_args)
             else:
                 response = {"error": "Unknown method"}
-        else:
-            # GET request - return server info
-            response = {
-                "name": "MCPizza",
-                "version": "1.0.0",
-                "description": "Domino's Pizza Ordering MCP Server",
-                "real_api_enabled": os.getenv("MCPIZZA_REAL_API", "false") == "true",
-                "fallback_enabled": os.getenv("MCPIZZA_FALLBACK_MOCK", "true") == "true"
-            }
-        
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-            },
-            'body': json.dumps(response)
-        }
-        
-    except Exception as e:
-        logger.error(f"Handler error: {e}")
-        return {
-            'statusCode': 500,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-            },
-            'body': json.dumps({"error": str(e)})
-        }
+            
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(response).encode())
+            
+        except Exception as e:
+            logger.error(f"POST error: {e}")
+            self.send_response(500)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": str(e)}).encode())
