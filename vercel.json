@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "api/mcp.py": {
-      "runtime": "python@3.9"
-    }
-  },
   "env": {
     "MCPIZZA_REAL_API": "true",
     "MCPIZZA_FALLBACK_MOCK": "true"
